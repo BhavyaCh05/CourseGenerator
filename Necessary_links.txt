@@ -10,6 +10,7 @@ REFERENCE WEBSITES
 1. wisdolia.in
 2. coursebox.ai
 3. https://codecanyon.net/item/ai-course-generator-text-to-course-saas-ai-video-image-content-payment-earn-gemini-react-admin/51342965
+4. PrepAI - AI Powered Question Generator
 
 
 Resources:-
