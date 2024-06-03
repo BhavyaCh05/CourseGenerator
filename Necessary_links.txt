@@ -58,6 +58,15 @@ EXPERT RECOMMENDATION
 8. 
 9.
 10.
+
+
+--------------------------------------------------
+ALTERNATIVES
+------------------------------------------------
+https://github.com/ItzCrazyKns/Perplexica
+
+
+This can be a game changer as I found an alternative to perplexity.ai , We can create a ton of projects from this , if we get to use this in a proper way 
 11.
 12.
 
