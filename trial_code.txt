@@ -1,32 +1,17 @@
 
 --Sample code to assessment based on mcq, fill in the blanks and short answers.
-@app.route('/generate_assessment', methods=['POST'])
-def generate_assessment():
-    file = request.files['pdf']
-    text = extract_text_from_pdf(file)
-    text_chunks = split_text_into_chunks(text)
+# Example user responses
+user_mcq_answers = ["A", "B", "C", "D", "A", "B", "C", "D", "A", "B"]
+user_fill_in_the_blank_answers = ["answer1", "answer2", "answer3", "answer4", "answer5", "wrong", "answer7", "answer8", "answer9", "answer10"]
+user_short_answer_answers = ["answer1", "wrong", "answer3", "wrong", "answer5", "answer6", "wrong", "answer8", "answer9", "wrong"]
 
-    mcq_questions = []
-    fill_in_the_blank_questions = []
-    short_answer_questions = []
+# Correct answers (for evaluation purposes)
+mcq_correct_answers = ["A", "B", "C", "D", "A", "B", "C", "D", "A", "B"]
+fill_in_the_blank_correct_answers = ["answer1", "answer2", "answer3", "answer4", "answer5", "answer6", "answer7", "answer8", "answer9", "answer10"]
+short_answer_correct_answers = ["answer1", "answer2", "answer3", "answer4", "answer5", "answer6", "answer7", "answer8", "answer9", "answer10"]
 
-    for chunk in text_chunks:
-        prompts = create_prompts(chunk)
-        mcq_questions.append(generate_questions(prompts['mcq']))
-        fill_in_the_blank_questions.append(generate_questions(prompts['fill_in_the_blank']))
-        short_answer_questions.append(generate_questions(prompts['short_answer']))
-
-    return jsonify({
-        'mcq_questions': mcq_questions,
-        'fill_in_the_blank_questions': fill_in_the_blank_questions,
-        'short_answer_questions': short_answer_questions
-    })
-
-@app.route('/evaluate_assessment', methods=['POST'])
-def evaluate_assessment():
-    user_answers = request.json.get('user_answers')
-    correct_answers = request.json.get('correct_answers')
-
+# Evaluate the user answers
+def evaluate_assessment(user_answers, correct_answers):
     evaluation = {
         'mcq': {
             'total': len(correct_answers['mcq']),
@@ -41,147 +26,33 @@ def evaluate_assessment():
             'correct': sum(1 for ua, ca in zip(user_answers['short_answer'], correct_answers['short_answer']) if ua.strip().lower() == ca.strip().lower())
         }
     }
+    return evaluation
 
-    return jsonify(evaluation)
+user_answers = {
+    'mcq': user_mcq_answers,
+    'fill_in_the_blank': user_fill_in_the_blank_answers,
+    'short_answer': user_short_answer_answers
+}
 
-if __name__ == '__main__':
-    app.run(debug=True)
+correct_answers = {
+    'mcq': mcq_correct_answers,
+    'fill_in_the_blank': fill_in_the_blank_correct_answers,
+    'short_answer': short_answer_correct_answers
+}
 
----
----=-----------------
----
----
+# Evaluate user answers
+evaluation = evaluate_assessment(user_answers, correct_answers)
+print("Evaluation Results:")
+print(evaluation)
 
+# Calculate accuracy rates
+accuracy_mcq = (evaluation['mcq']['correct'] / evaluation['mcq']['total']) * 100
+accuracy_fill_in_the_blank = (evaluation['fill_in_the_blank']['correct'] / evaluation['fill_in_the_blank']['total']) * 100
+accuracy_short_answer = (evaluation['short_answer']['correct'] / evaluation['short_answer']['total']) * 100
 
-
-
-
-
---yeh waala flask ko lekar
-import React, { useState } from 'react';
-import axios from 'axios';
-
-const App = () => {
-  const [file, setFile] = useState(null);
-  const [mcqQuestions, setMcqQuestions] = useState([]);
-  const [fillInTheBlankQuestions, setFillInTheBlankQuestions] = useState([]);
-  const [shortAnswerQuestions, setShortAnswerQuestions] = useState([]);
-  const [userAnswers, setUserAnswers] = useState({
-    mcq: [],
-    fill_in_the_blank: [],
-    short_answer: []
-  });
-  const [evaluation, setEvaluation] = useState(null);
-
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
-
-  const handleSubmit = async () => {
-    const formData = new FormData();
-    formData.append('pdf', file);
-
-    try {
-      const response = await axios.post('/generate_assessment', formData);
-      setMcqQuestions(response.data.mcq_questions);
-      setFillInTheBlankQuestions(response.data.fill_in_the_blank_questions);
-      setShortAnswerQuestions(response.data.short_answer_questions);
-    } catch (error) {
-      console.error('Error generating assessment:', error);
-    }
-  };
-
-  const handleAnswerChange = (type, index, value) => {
-    setUserAnswers(prev => {
-      const newAnswers = { ...prev };
-      newAnswers[type][index] = value;
-      return newAnswers;
-    });
-  };
-
-  const handleEvaluation = async () => {
-    try {
-      const response = await axios.post('/evaluate_assessment', {
-        user_answers: userAnswers,
-        correct_answers: {
-          mcq: mcqQuestions.map(q => q.correct_answer),
-          fill_in_the_blank: fillInTheBlankQuestions.map(q => q.correct_answer),
-          short_answer: shortAnswerQuestions.map(q => q.correct_answer)
-        }
-      });
-      setEvaluation(response.data);
-    } catch (error) {
-      console.error('Error evaluating assessment:', error);
-    }
-  };
-
-  return (
-    <div>
-      <h1>AI Course Generator</h1>
-      <input type="file" onChange={handleFileChange} />
-      <button onClick={handleSubmit}>Generate Assessment</button>
-      
-      <h2>MCQ Questions</h2>
-      {mcqQuestions.map((question, index) => (
-        <div key={index}>
-          <p>{question.question}</p>
-          {question.options.map((option, i) => (
-            <div key={i}>
-              <input 
-                type="radio" 
-                name={`mcq-${index}`} 
-                value={option} 
-                onChange={(e) => handleAnswerChange('mcq', index, e.target.value)}
-              />
-              <label>{option}</label>
-            </div>
-          ))}
-        </div>
-      ))}
-
-      <h2>Fill in the Blank Questions</h2>
-      {fillInTheBlankQuestions.map((question, index) => (
-        <div key={index}>
-          <p>{question.question}</p>
-          <input 
-            type="text" 
-            onChange={(e) => handleAnswerChange('fill_in_the_blank', index, e.target.value)} 
-          />
-        </div>
-      ))}
-
-      <h2>Short Answer Questions</h2>
-      {shortAnswerQuestions.map((question, index) => (
-        <div key={index}>
-          <p>{question.question}</p>
-          <textarea 
-            onChange={(e) => handleAnswerChange('short_answer', index, e.target.value)}
-          />
-        </div>
-      ))}
-
-      <button onClick={handleEvaluation}>Submit Answers</button>
-
-      {evaluation && (
-        <div>
-          <h2>Evaluation</h2>
-          <p>MCQ: {evaluation.mcq.correct} / {evaluation.mcq.total
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+print(f"MCQ Accuracy: {accuracy_mcq}%")
+print(f"Fill-in-the-Blank Accuracy: {accuracy_fill_in_the_blank}%")
+print(f"Short Answer Accuracy: {accuracy_short_answer}%")
 
 
 
